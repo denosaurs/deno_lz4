@@ -1,0 +1,8 @@
+# ide
+.idea
+
+# cargo build
+target/
+
+# wasm-pack
+pkg/
