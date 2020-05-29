@@ -22,21 +22,20 @@ await pack.status();
 console.log("[!] inlining wasm in js");
 const wasm = await Deno.readFile("pkg/deno_lz4_bg.wasm");
 
-const source =
-  `export const source = Uint8Array.from(atob("${
-    encode(wasm)
-  }"), c => c.charCodeAt(0));`;
+const source = `export const source = Uint8Array.from(atob("${
+  encode(wasm)
+}"), c => c.charCodeAt(0));`;
 
 const init = await Deno.readTextFile("pkg/deno_lz4.js");
 
 const output = Terser.minify(`${source}\n${init}`, {
   mangle: {
     module: true,
-    reserved: ["decode"]
+    reserved: ["decode"],
   },
   output: {
-    preamble: "//deno-fmt-ignore-file"
-  }
+    preamble: "//deno-fmt-ignore-file",
+  },
 });
 console.log(
   `[!] minified js, size reduction: ${new Blob([(`${source}\n${init}`)]).size -
