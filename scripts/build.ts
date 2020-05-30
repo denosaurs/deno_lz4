@@ -1,6 +1,6 @@
 // Copyright 2020-present the denosaurs team. All rights reserved. MIT license.
 
-import { encode } from "https://deno.land/std/encoding/base64.ts";
+import { encode } from "https://deno.land/std@0.54.0/encoding/base64.ts";
 import Terser from "https://cdn.pika.dev/terser@^4.7.0";
 
 const encoder = new TextEncoder();
