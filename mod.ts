@@ -35,7 +35,6 @@ export function compress(input: Uint8Array): Uint8Array {
  * ```
  *
  * @param input Input data.
- * @param bufferSize Read buffer size
  */
 export function decompress(input: Uint8Array): Uint8Array {
   return lz4_decompress(input);
