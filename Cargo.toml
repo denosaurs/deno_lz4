@@ -22,4 +22,3 @@ opt-level = "z"
 codegen-units = 1
 
 [features]
-default = ["wee_alloc"]
