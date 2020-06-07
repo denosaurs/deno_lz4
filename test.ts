@@ -4,7 +4,7 @@ import { compress, decompress } from "./mod.ts";
 import {
   assertEquals,
   assertThrows,
-} from "https://deno.land/std@0.54.0/testing/asserts.ts";
+} from "https://deno.land/std@0.56.0/testing/asserts.ts";
 
 function encode(input: string): Uint8Array {
   return new TextEncoder().encode(input);
