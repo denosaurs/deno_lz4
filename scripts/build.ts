@@ -1,52 +1,92 @@
 // Copyright 2020-present the denosaurs team. All rights reserved. MIT license.
 
-import { encode } from "https://deno.land/std@0.54.0/encoding/base64.ts";
+import { encode } from "https://deno.land/std@0.56.0/encoding/base64.ts";
 import Terser from "https://cdn.pika.dev/terser@^4.7.0";
+
+const name = "deno_lz4";
 
 const encoder = new TextEncoder();
 
-const toml = await Deno.stat("Cargo.toml");
-if (!toml.isFile) {
-  console.log(
-    `[!] Error: the build script should be executed in the "deno_lz4" root`,
-  );
-  Deno.exit(1);
+async function requires(...executables: string[]) {
+  const where = Deno.build.os === "windows" ? "where" : "which";
+
+  for (const executable of executables) {
+    const process = Deno.run({
+      cmd: [where, executable],
+      stderr: "null",
+      stdin: "null",
+      stdout: "null",
+    });
+
+    if (!(await process.status()).success) {
+      err(`Could not find required build tool ${executable}`);
+    }
+  }
 }
 
-console.log("[!] building using wasm-pack");
-const pack = Deno.run(
-  { cmd: ["wasm-pack", "build", "--target", "web", "--release"] },
+async function run(msg: string, cmd: string[]) {
+  log(msg);
+
+  const process = Deno.run({ cmd });
+
+  if (!(await process.status()).success) {
+    err(`${msg} failed`);
+  }
+}
+
+function log(text: string): void {
+  console.log(`[log] ${text}`);
+}
+
+function err(text: string): never {
+  console.log(`[err] ${text}`);
+  return Deno.exit(1);
+}
+
+await requires("rustup", "rustc", "cargo", "wasm-pack");
+
+if (!(await Deno.stat("Cargo.toml")).isFile) {
+  err(`the build script should be executed in the "${name}" root`);
+}
+
+await run(
+  "building using wasm-pack",
+  ["wasm-pack", "build", "--target", "web", "--release"],
 );
-await pack.status();
 
-console.log("[!] inlining wasm in js");
-const wasm = await Deno.readFile("pkg/deno_lz4_bg.wasm");
+const wasm = await Deno.readFile(`pkg/${name}_bg.wasm`);
+const encoded = encode(wasm);
+log(
+  `encoded wasm using base64, size increase: ${encoded.length -
+    wasm.length} bytes`,
+);
 
-const source = `export const source = Uint8Array.from(atob("${
-  encode(wasm)
-}"), c => c.charCodeAt(0));`;
+log("inlining wasm in js");
+const source =
+  `export const source = Uint8Array.from(atob("${encoded}"), c => c.charCodeAt(0));`;
 
-const init = await Deno.readTextFile("pkg/deno_lz4.js");
+const init = await Deno.readTextFile(`pkg/${name}.js`);
 
+log("minifying js");
 const output = Terser.minify(`${source}\n${init}`, {
-  mangle: {
-    module: true,
-    reserved: ["decode"],
-  },
+  mangle: { module: true },
   output: {
     preamble: "//deno-fmt-ignore-file",
   },
 });
-console.log(
-  `[!] minified js, size reduction: ${new Blob([(`${source}\n${init}`)]).size -
-    new Blob([output.code]).size} bytes`,
-);
 
-console.log(`[!] writing output to file ("wasm.js")`);
-await Deno.writeFile(
-  "wasm.js",
-  encoder.encode(output.code),
-);
+if (output.error) {
+  err(`encountered error when minifying: ${output.error}`);
+}
+
+const reduction = new Blob([(`${source}\n${init}`)]).size -
+  new Blob([output.code]).size;
+log(`minified js, size reduction: ${reduction} bytes`);
+
+log(`writing output to file ("wasm.js")`);
+await Deno.writeFile("wasm.js", encoder.encode(output.code));
 
 const outputFile = await Deno.stat("wasm.js");
-console.log(`[!] output file ("wasm.js") size is: ${outputFile.size} bytes`);
+log(
+  `output file ("wasm.js"), final size is: ${outputFile.size} bytes`,
+);
