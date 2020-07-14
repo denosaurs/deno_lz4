@@ -1,7 +1,5 @@
-// Copyright 2020-present the denosaurs team. All rights reserved. MIT license.
-
-import { encode } from "https://deno.land/std@0.56.0/encoding/base64.ts";
-import Terser from "https://cdn.pika.dev/terser@^4.7.0";
+import { encode } from "https://deno.land/std@0.61.0/encoding/base64.ts";
+import Terser from "https://jspm.dev/terser@4.8.0";
 
 const name = "deno_lz4";
 
