@@ -1,5 +1,5 @@
-import { encode } from "https://deno.land/std@0.61.0/encoding/base64.ts";
-import Terser from "https://jspm.dev/terser@4.8.0";
+import { encode } from "https://deno.land/std@0.67.0/encoding/base64.ts";
+import { minify } from "https://jspm.dev/terser@5.2.1";
 
 const name = "deno_lz4";
 
@@ -41,7 +41,7 @@ function err(text: string): never {
   return Deno.exit(1);
 }
 
-await requires("rustup", "rustc", "cargo", "wasm-pack");
+await requires("rustup", "rustc", "cargo", "wasm-pack", "wasm-opt");
 
 if (!(await Deno.stat("Cargo.toml")).isFile) {
   err(`the build script should be executed in the "${name}" root`);
@@ -66,7 +66,7 @@ const source =
 const init = await Deno.readTextFile(`pkg/${name}.js`);
 
 log("minifying js");
-const output = Terser.minify(`${source}\n${init}`, {
+const output = await minify(`${source}${init}`, {
   mangle: { module: true },
   output: {
     preamble: "//deno-fmt-ignore-file",
@@ -77,7 +77,7 @@ if (output.error) {
   err(`encountered error when minifying: ${output.error}`);
 }
 
-const reduction = new Blob([(`${source}\n${init}`)]).size -
+const reduction = new Blob([(`${source}${init}`)]).size -
   new Blob([output.code]).size;
 log(`minified js, size reduction: ${reduction} bytes`);
 
