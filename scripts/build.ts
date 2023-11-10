@@ -1,33 +1,30 @@
-import { encode } from "https://deno.land/std@0.67.0/encoding/base64.ts";
-import { minify } from "https://jspm.dev/terser@5.2.1";
+import { encodeBase64 } from "https://deno.land/std@0.206.0/encoding/base64.ts";
+import { minify } from "https://esm.sh/terser@5.24.0";
 
 const name = "deno_lz4";
 
 const encoder = new TextEncoder();
 
-async function requires(...executables: string[]) {
+function requires(...executables: string[]) {
   const where = Deno.build.os === "windows" ? "where" : "which";
 
   for (const executable of executables) {
-    const process = Deno.run({
-      cmd: [where, executable],
-      stderr: "null",
-      stdin: "null",
-      stdout: "null",
-    });
+    const command = new Deno.Command(where);
+    const { success } = command.outputSync();
 
-    if (!(await process.status()).success) {
+    if (success) {
       err(`Could not find required build tool ${executable}`);
     }
   }
 }
 
-async function run(msg: string, cmd: string[]) {
+function run(msg: string, cmd: string[]) {
   log(msg);
 
-  const process = Deno.run({ cmd });
+  const command = new Deno.Command(cmd[0], { args: cmd.slice(1) });
+  const { success } = command.outputSync();
 
-  if (!(await process.status()).success) {
+  if (success) {
     err(`${msg} failed`);
   }
 }
@@ -41,22 +38,24 @@ function err(text: string): never {
   return Deno.exit(1);
 }
 
-await requires("rustup", "rustc", "cargo", "wasm-pack", "wasm-opt");
+requires("rustup", "rustc", "cargo", "wasm-pack", "wasm-opt");
 
 if (!(await Deno.stat("Cargo.toml")).isFile) {
   err(`the build script should be executed in the "${name}" root`);
 }
 
-await run(
+run(
   "building using wasm-pack",
   ["wasm-pack", "build", "--target", "web", "--release"],
 );
 
 const wasm = await Deno.readFile(`pkg/${name}_bg.wasm`);
-const encoded = encode(wasm);
+const encoded = encodeBase64(wasm);
 log(
-  `encoded wasm using base64, size increase: ${encoded.length -
-    wasm.length} bytes`,
+  `encoded wasm using base64, size increase: ${
+    encoded.length -
+    wasm.length
+  } bytes`,
 );
 
 log("inlining wasm in js");
@@ -69,7 +68,7 @@ log("minifying js");
 const output = await minify(`${source}${init}`, {
   mangle: { module: true },
   output: {
-    preamble: "//deno-fmt-ignore-file",
+    preamble: "// deno-lint-ignore-file\n//deno-fmt-ignore-file",
   },
 });
 
@@ -77,7 +76,7 @@ if (output.error) {
   err(`encountered error when minifying: ${output.error}`);
 }
 
-const reduction = new Blob([(`${source}${init}`)]).size -
+const reduction = new Blob([`${source}${init}`]).size -
   new Blob([output.code]).size;
 log(`minified js, size reduction: ${reduction} bytes`);
 

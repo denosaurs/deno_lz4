@@ -1,0 +1,7 @@
+{
+  "tasks": {
+    "test": "deno test",
+    "build": "deno run -A ./scripts/build.ts"
+  },
+  "lock": false
+}

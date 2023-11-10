@@ -3,7 +3,7 @@
 import {
   assertEquals,
   assertThrows,
-} from "https://deno.land/std@0.67.0/testing/asserts.ts";
+} from "https://deno.land/std@0.206.0/assert/mod.ts";
 
 import { compress, decompress } from "./mod.ts";
 
@@ -15,9 +15,12 @@ Deno.test({
   name: "compress",
   fn: () => {
     // empty
-    assertEquals(compress(encode("")), [0]);
+    assertEquals(compress(encode("")), Uint8Array.from([0]));
     // 'X' x64 times
-    assertEquals(compress(encode("X".repeat(64))), [31, 88, 1, 0, 44, 0]);
+    assertEquals(
+      compress(encode("X".repeat(64))),
+      Uint8Array.from([31, 88, 1, 0, 44, 0]),
+    );
   },
 });
 
@@ -25,7 +28,7 @@ Deno.test({
   name: "decompress",
   fn: () => {
     // empty
-    assertEquals(decompress(Uint8Array.from([0])), []);
+    assertEquals(decompress(Uint8Array.from([0])), Uint8Array.from([]));
     // 'X' x64 times
     assertEquals(
       decompress(Uint8Array.from([31, 88, 1, 0, 44, 0])),
