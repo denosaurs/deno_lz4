@@ -4,10 +4,6 @@ use lz4_compression::prelude::compress;
 use lz4_compression::prelude::decompress;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-#[cfg(feature = "wee_alloc")]
-#[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
-
 #[wasm_bindgen]
 pub fn lz4_compress(input: &[u8]) -> Vec<u8> {
     compress(input)
