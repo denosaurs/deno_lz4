@@ -1,9 +1,6 @@
 // Copyright 2020-present the denosaurs team. All rights reserved. MIT license.
 
-import {
-  assertEquals,
-  assertThrows,
-} from "jsr:@std/assert@0.221";
+import { assertEquals, assertThrows } from "jsr:@std/assert@0.221";
 
 import { compress, decompress } from "./mod.ts";
 
