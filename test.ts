@@ -3,7 +3,7 @@
 import {
   assertEquals,
   assertThrows,
-} from "https://deno.land/std@0.206.0/assert/mod.ts";
+} from "jsr:@std/assert@0.221";
 
 import { compress, decompress } from "./mod.ts";
 

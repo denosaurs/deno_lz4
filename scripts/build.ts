@@ -1,5 +1,5 @@
-import { encodeBase64 } from "https://deno.land/std@0.206.0/encoding/base64.ts";
-import { minify } from "https://esm.sh/terser@5.24.0";
+import { encodeBase64 } from "@std/encoding/base64";
+import { minify } from "terser";
 
 const name = "deno_lz4";
 
@@ -24,7 +24,7 @@ function run(msg: string, cmd: string[]) {
   const command = new Deno.Command(cmd[0], { args: cmd.slice(1) });
   const { success } = command.outputSync();
 
-  if (success) {
+  if (!success) {
     err(`${msg} failed`);
   }
 }
